@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Где стоят деньги">
+<meta property="og:description" content="Найду, где у вашей компании стоят деньги. Операционная диагностика для собственников и корпораций.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='3' y='3' width='10' height='10' fill='%23DF2F1C'/%3E%3C/svg%3E">
+<title>Где стоят деньги</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Операционная диагностика для собственников и корпораций: находим одно узкое место, которое держит прибыль, считаем его цену и расшиваем.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: схема-чертёж. Широкая сетка 12 колонок, тонкие линии как на технической схеме,
+   красный только у узкого места. Громкость в одном месте: живая схема потока в первом экране. */
+:root{
+  --paper:#E8ECEE;      /* чертёжный холодный серый */
+  --sheet:#F6F8F8;      /* лист, карточки */
+  --ink:#0F1A20;        /* графит */
+  --ink-2:#4B5A63;      /* вторичный текст */
+  --line:#C3CDD2;       /* линии схемы */
+  --signal:#DF2F1C;     /* узкое место */
+  --ok:#17785A;         /* расшито */
+  --on-ink:#F1F4F5;
+  --display:"Fira Sans Extra Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --max:1240px;
+  --gut-l:max(16px, env(safe-area-inset-left, 0px));
+  --gut-r:max(16px, env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C1216; --sheet:#141C21; --ink:#E6EBED; --ink-2:#93A1A9; --line:#2A363D;
+    --signal:#FF4B35; --ok:#3CC08F; --on-ink:#0C1216; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C1216; --sheet:#141C21; --ink:#E6EBED; --ink-2:#93A1A9; --line:#2A363D;
+  --signal:#FF4B35; --ok:#3CC08F; --on-ink:#0C1216; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font:400 17px/1.55 var(--body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--paper)}
+a{color:inherit}
+::selection{background:var(--signal);color:#fff}
+:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+.wrap{max-width:var(--max);margin:0 auto;padding-left:var(--gut-l);padding-right:var(--gut-r)}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-.01em;line-height:.98;margin:0;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.nw{white-space:nowrap}
+.red{color:var(--signal)}
+
+/* шапка */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:saturate(1.2) blur(6px);-webkit-backdrop-filter:saturate(1.2) blur(6px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:24px;height:60px}
+.brand{white-space:nowrap;display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:0}
+.brand i{width:10px;height:10px;background:var(--signal);display:block}
+.nav{display:flex;gap:22px;margin-left:auto;font-size:15px}
+.nav a{text-decoration:none;color:var(--ink-2)}
+.nav a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border:1px solid var(--ink);background:var(--ink);color:var(--on-ink);font:500 16px/1 var(--body);text-decoration:none;cursor:pointer;border-radius:2px;transition:background .2s,color .2s,border-color .2s}
+.btn:hover{background:var(--signal);border-color:var(--signal);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{border-color:var(--signal);color:var(--signal);background:transparent}
+.btn.sm{min-height:38px;padding:0 16px;font-size:14px;white-space:nowrap}
+.btn .short{display:none}
+.btn .arr{font-family:var(--mono)}
+
+/* первый экран */
+.hero{padding-block:56px 32px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:32px 48px;align-items:end}
+.hero .mono{margin-bottom:22px;display:block}
+.hero h1{font-size:clamp(46px,7.4vw,104px);font-weight:600}
+.hero h1 .red{position:relative;white-space:nowrap}
+.hero h1 .red::after{content:"";position:absolute;left:0;right:0;bottom:.06em;height:.07em;background:var(--signal);transform-origin:left;animation:draw .9s .5s cubic-bezier(.6,0,.2,1) both}
+.lead{font-size:19px;line-height:1.5;color:var(--ink)}
+.lead + .ctas{margin-top:24px}
+.ctas{display:flex;flex-wrap:wrap;gap:12px}
+@keyframes draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes rise{from{transform:translateY(14px);opacity:.001}to{transform:none;opacity:1}}
+.hero h1,.hero .side{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+.hero .side{animation-delay:.15s}
+
+/* схема */
+.scheme{margin:44px 0 0;border:1px solid var(--line);background:var(--sheet);position:relative}
+.scheme-head{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.meter{display:flex;align-items:baseline;gap:10px}
+.meter b{font:600 34px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--signal);min-width:2.4em;transition:color .4s}
+.meter.ok b{color:var(--ok)}
+.meter span{font-size:14px;color:var(--ink-2);max-width:20ch;line-height:1.3}
+#flow{display:block;width:100%;height:300px;cursor:pointer;touch-action:pan-y}
+.scheme-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 24px;align-items:center;padding:14px 18px 18px;border-top:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chips .mono{margin-right:6px}
+.chip{font:500 14px/1 var(--body);padding:9px 12px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;border-radius:2px}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--signal);color:var(--signal);background:color-mix(in srgb,var(--signal) 8%,transparent)}
+.cap{grid-column:1/-1;font-size:16px;min-height:3em;color:var(--ink)}
+.cap b{font-weight:600}
+.play{position:absolute;left:18px;top:76px;display:none}
+.scheme.still .play{display:inline-flex}
+
+/* секции */
+section.sec{scroll-margin-top:60px;padding-block:88px;border-top:1px solid var(--line)}
+.sec-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:28px 48px}
+.sec-grid > .mono{padding-top:10px}
+.sec h2{font-size:clamp(36px,4.6vw,64px);margin-bottom:28px}
+.sec .intro{max-width:62ch;color:var(--ink-2);font-size:18px;margin-top:-8px;margin-bottom:36px}
+
+/* симптомы */
+.sym{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.sym li{list-style:none;padding:22px 20px 26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font:500 22px/1.2 var(--display);letter-spacing:.005em;min-height:132px;display:flex;flex-direction:column;justify-content:space-between;gap:18px;transition:background .2s}
+.sym li:hover{background:var(--sheet)}
+.sym li .mono{font-size:11px}
+.sym ul,.sym{margin:0;padding:0}
+
+/* метод */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;counter-reset:s}
+.step{border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.step .n{font:600 56px/1 var(--display);color:var(--line)}
+.step:nth-child(2) .n{color:var(--signal)}
+.step h3{font-size:30px}
+.step .mono{font-size:11px}
+.step p{color:var(--ink-2);font-size:16px}
+.method-note{margin-top:40px;padding:18px 20px;border:1px dashed var(--line);display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+.method-note p{max-width:70ch;font-size:16px;color:var(--ink-2)}
+
+/* лист с результатом */
+.sheet-wrap{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;align-items:start}
+.sheet-text p{color:var(--ink-2);font-size:18px;margin-bottom:16px;max-width:44ch}
+.sheet-text p strong{color:var(--ink);font-weight:600}
+.doc{background:var(--sheet);border:1px solid var(--line);padding:30px 30px 26px;position:relative;box-shadow:0 1px 0 var(--line),0 24px 60px -30px color-mix(in srgb,var(--ink) 35%,transparent);transform:rotate(-.6deg)}
+.doc-head{display:flex;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--ink);margin-bottom:6px}
+.doc-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.doc-row .mono{font-size:11px;padding-top:4px}
+.doc-row .v{font-size:16px}
+.doc-row .big{font:600 34px/1 var(--display);color:var(--signal)}
+.doc-row .big small{font:400 15px/1.3 var(--body);color:var(--ink-2);display:block;margin-top:6px}
+.doc ol{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.doc ol li{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;font-size:15px}
+.doc ol li span{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-2)}
+.stamp{position:absolute;right:22px;bottom:18px;transform:rotate(-8deg);border:2px solid var(--signal);color:var(--signal);font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:7px 10px;opacity:.85}
+
+/* линейка */
+.ladder{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:0;border:1px solid var(--line)}
+.tier{padding:28px 26px 30px;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--line);background:var(--paper)}
+.tier:last-child{border-right:0}
+.tier.main{background:var(--ink);color:var(--on-ink);margin:-14px 0;padding-block:42px 44px;position:relative;z-index:1;border-right:0}
+.tier .mono{display:flex;justify-content:space-between;gap:10px}
+.tier.main .mono{color:color-mix(in srgb,var(--on-ink) 65%,transparent)}
+.tier h3{font-size:36px}
+.tier .price{font:600 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.tier .price small{display:block;font:400 14px/1.4 var(--body);margin-top:8px;opacity:.75}
+.tier p{font-size:16px;opacity:.85}
+.tier ul{margin:0;padding:0;list-style:none;display:grid;gap:9px;font-size:15px}
+.tier li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px}
+.tier li::before{content:"";width:8px;height:8px;margin-top:7px;border:1.5px solid currentColor}
+.tier.main li::before{background:var(--signal);border-color:var(--signal)}
+.tier .btn{margin-top:auto}
+.tier.main .btn{background:var(--signal);border-color:var(--signal);color:#fff}
+.tier.main .btn:hover{background:var(--on-ink);border-color:var(--on-ink);color:var(--ink)}
+.tier .fine{font-size:13px;opacity:.7}
+.guarantee{margin-top:40px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;padding:22px 24px;border:1px solid var(--signal)}
+.guarantee b{font:600 44px/1 var(--display);color:var(--signal)}
+.guarantee p{font-size:18px;max-width:60ch}
+
+/* калькулятор */
+.calc{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);border:1px solid var(--line);background:var(--sheet)}
+.calc-in{padding:28px;display:grid;gap:30px;border-right:1px solid var(--line)}
+.field label{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-size:15px;color:var(--ink-2);margin-bottom:12px}
+.field label output{font:600 26px/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;appearance:none;-webkit-appearance:none;height:28px;background:transparent;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--ink) var(--p,50%),var(--line) var(--p,50%))}
+input[type=range]::-moz-range-track{height:2px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:2px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-9px;background:var(--sheet);border:2px solid var(--ink);border-radius:50%}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;background:var(--sheet);border:2px solid var(--ink);border-radius:50%}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line)}
+.seg button{font:500 15px/1.25 var(--body);padding:12px 8px;border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button small{display:block;font:400 12px/1 var(--mono);color:var(--ink-2);margin-top:5px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+.seg button[aria-pressed="true"] small{color:color-mix(in srgb,var(--on-ink) 70%,transparent)}
+.calc-out{padding:28px;display:flex;flex-direction:column;gap:18px}
+.calc-out .num{font:700 clamp(52px,6.4vw,88px)/.92 var(--display);color:var(--signal);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.calc-out .num small{display:block;font:500 20px/1.2 var(--display);color:var(--ink);letter-spacing:0;margin-top:10px}
+.calc-out .row{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--line);padding-top:12px;font-size:16px}
+.calc-out .row b{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.calc-out .fine{font-size:13px;color:var(--ink-2);margin-top:auto}
+
+/* не откатится */
+.stick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.stick div{padding:24px 22px 26px;background:var(--sheet);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.stick h3{font-size:26px}
+.stick p{font-size:16px;color:var(--ink-2)}
+
+/* обо мне */
+.about{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:40px}
+.about .quote{font:500 clamp(28px,3.2vw,42px)/1.12 var(--display);letter-spacing:-.005em}
+.about .quote .red{white-space:nowrap}
+.about-side{display:grid;gap:0;border-top:1px solid var(--ink)}
+.about-side div{padding:14px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;font-size:15px}
+.about-side .mono{font-size:11px;padding-top:3px}
+.about-text{margin-top:28px;display:grid;gap:14px;color:var(--ink-2);max-width:60ch}
+
+/* вопросы */
+.faq{border-top:1px solid var(--ink)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;padding:22px 44px 22px 0;font:500 24px/1.2 var(--display);position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:4px;top:18px;font:400 28px/1 var(--mono);color:var(--ink-2);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg);color:var(--signal)}
+.faq details p{padding:0 0 24px;max-width:66ch;color:var(--ink-2)}
+
+/* заявка */
+.contact{background:var(--ink);color:var(--on-ink);border-top:0}
+.contact .mono{color:color-mix(in srgb,var(--on-ink) 60%,transparent)}
+.contact h2{color:var(--on-ink)}
+.contact .intro{color:color-mix(in srgb,var(--on-ink) 75%,transparent)}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px}
+.f{display:flex;flex-direction:column;gap:8px;min-width:0}
+.f.wide{grid-column:1/-1}
+.f label{font-size:14px;color:color-mix(in srgb,var(--on-ink) 70%,transparent)}
+.f input,.f select,.f textarea{font:400 17px/1.4 var(--body);color:var(--on-ink);background:transparent;border:0;border-bottom:1px solid color-mix(in srgb,var(--on-ink) 35%,transparent);padding:10px 0;border-radius:0;width:100%}
+.f select option{color:#0F1A20}
+.f textarea{resize:vertical;min-height:84px}
+.f input:focus,.f select:focus,.f textarea:focus{outline:0;border-bottom-color:var(--signal)}
+.form-end{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;margin-top:10px}
+.form-end .btn{background:var(--signal);border-color:var(--signal);color:#fff}
+.form-end .btn:hover{background:var(--on-ink);border-color:var(--on-ink);color:var(--ink)}
+.form-end p{font-size:14px;color:color-mix(in srgb,var(--on-ink) 60%,transparent);max-width:46ch}
+.sent{grid-column:1/-1;border:1px solid var(--signal);padding:16px 18px;font-size:16px}
+
+footer{background:var(--ink);color:color-mix(in srgb,var(--on-ink) 55%,transparent);border-top:1px solid color-mix(in srgb,var(--on-ink) 15%,transparent)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;padding-block:24px;font-size:14px}
+
+@media (max-width:1120px){
+  .ladder{grid-template-columns:minmax(0,1fr)}
+  .tier{border-right:0;border-bottom:1px solid var(--line)}
+  .tier.main{margin:0}
+}
+@media (max-width:1000px){
+  .hero-grid,.sheet-wrap,.about,.calc{grid-template-columns:minmax(0,1fr)}
+  .calc-in{border-right:0;border-bottom:1px solid var(--line)}
+  .sec-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+  .ladder{grid-template-columns:minmax(0,1fr)}
+  .tier{border-right:0;border-bottom:1px solid var(--line)}
+  .tier.main{margin:0}
+  .steps,.stick{grid-template-columns:minmax(0,1fr)}
+  .sym{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .doc{transform:none}
+}
+@media (max-width:720px){
+  .nav{display:none}
+  .brand{font-size:20px}
+  .btn .long{display:none}
+  .btn .short{display:inline}
+  .top .btn{margin-left:auto}
+  .hero{padding-block:36px 24px}
+  section.sec{padding-block:60px}
+  .sym{grid-template-columns:minmax(0,1fr)}
+  .sym li{min-height:0;font-size:21px}
+  .scheme-foot{grid-template-columns:minmax(0,1fr)}
+  .doc{padding:22px 18px 20px}
+  .doc-row{grid-template-columns:minmax(0,1fr);gap:6px}
+  form{grid-template-columns:minmax(0,1fr)}
+  .guarantee{grid-template-columns:minmax(0,1fr)}
+  .about-side div{grid-template-columns:minmax(0,1fr);gap:4px}
+  .calc-in,.calc-out{padding:22px 18px}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .hero h1,.hero .side,.hero h1 .red::after{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#start"><i></i>Где стоят деньги</a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="#method">Метод</a>
+      <a href="#result">Результат</a>
+      <a href="#ladder">Форматы</a>
+      <a href="#calc">Расчёт</a>
+      <a href="#faq">Вопросы</a>
+    </nav>
+    <a class="btn sm" href="#contact"><span class="long">Записаться на разбор</span><span class="short">Разбор</span></a>
+  </div>
+</header>
+
+<main id="start">
+  <section class="hero">
+    <div class="wrap">
+      <span class="mono">Операционная диагностика для собственников и корпораций</span>
+      <div class="hero-grid">
+        <h1>Найду, где у вашей компании <span class="red">стоят деньги</span></h1>
+        <div class="side">
+          <p class="lead">У каждой компании есть одно узкое место. Через него проходит вся прибыль. Пока оно забито, новые люди, CRM и стратегии денег не прибавляют.</p>
+          <div class="ctas">
+            <a class="btn" href="#contact">Разобрать мою компанию <span class="arr">→</span></a>
+            <a class="btn ghost" href="#calc">Посчитать потери</a>
+          </div>
+        </div>
+      </div>
+
+      <figure class="scheme" id="scheme" aria-label="Схема потока денег через компанию">
+        <div class="scheme-head">
+          <span class="mono">Схема · поток денег через компанию</span>
+          <div class="meter" id="meter"><b id="meterVal">34%</b><span id="meterTxt">потока доходит до прибыли</span></div>
+        </div>
+        <canvas id="flow" role="img" aria-label="Деньги движутся от заявок к прибыли и скапливаются перед узким местом"></canvas>
+        <button class="btn sm ghost play" id="play" type="button">Запустить поток</button>
+        <div class="scheme-foot">
+          <div class="chips" id="chips" role="group" aria-label="Где у вас узкое место">
+            <span class="mono">Где у вас затык:</span>
+          </div>
+          <button class="btn" id="fix" type="button">Расшить узкое место</button>
+          <p class="cap" id="cap" aria-live="polite"></p>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec" id="symptoms">
+    <div class="wrap sec-grid">
+      <span class="mono">Симптомы</span>
+      <div>
+        <h2>Так узкое место выглядит изнутри</h2>
+        <ul class="sym">
+          <li><span>Выручка растёт, а денег на счёте больше не становится</span><span class="mono">деньги</span></li>
+          <li><span>Стратсессию провели, через месяц всё как было</span><span class="mono">стратегия</span></li>
+          <li><span>Ни одно решение не принимается без собственника</span><span class="mono">управление</span></li>
+          <li><span>Внедрили CRM, KPI, наняли консультантов. Эффекта нет</span><span class="mono">изменения</span></li>
+          <li><span>Отделы винят друг друга, и каждый по-своему прав</span><span class="mono">команда</span></li>
+          <li><span>Склад полный, касса пустая</span><span class="mono">оборот</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="method">
+    <div class="wrap sec-grid">
+      <span class="mono">Метод</span>
+      <div>
+        <h2>Три шага от жалоб до денег</h2>
+        <p class="intro">Десятки проблем в компании обычно растут из одной причины. Чинить их по очереди дорого и долго. Я ищу ту, из которой растут остальные.</p>
+        <div class="steps">
+          <div class="step">
+            <span class="n">1</span>
+            <span class="mono">Недели 1–2</span>
+            <h3>Нахожу</h3>
+            <p>Говорю с собственником и командой, смотрю цифры и то, как на самом деле движется заказ. Собираю карту причин и нахожу ту, из которой растут остальные.</p>
+          </div>
+          <div class="step">
+            <span class="n">2</span>
+            <span class="mono">Неделя 3</span>
+            <h3>Считаю</h3>
+            <p>Перевожу узкое место в рубли: сколько маржи компания недополучает каждый месяц, пока оно не расшито. С этой цифрой решение принимается за один разговор.</p>
+          </div>
+          <div class="step">
+            <span class="n">3</span>
+            <span class="mono">3–6 месяцев</span>
+            <h3>Расшиваю</h3>
+            <p>Превращаю решение в проекты с владельцами и сроками и веду их до результата, пока процесс не начнёт работать без меня.</p>
+          </div>
+        </div>
+        <div class="method-note">
+          <span class="mono">Основа</span>
+          <p>Теория ограничений Элияху Голдратта и годы операционной работы в корпорациях. Дерево причин и вся методология остаются у меня в работе. Вам на стол ложится одна страница с решением.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="result">
+    <div class="wrap sec-grid">
+      <span class="mono">Результат</span>
+      <div>
+        <h2>Что ляжет вам на стол</h2>
+        <div class="sheet-wrap">
+          <div class="sheet-text">
+            <p><strong>Одна страница вместо отчёта на восемьдесят слайдов.</strong> На ней видно, что держит деньги, сколько это стоит и кто что делает дальше.</p>
+            <p>Её можно показать совету директоров, акционеру или команде. Через месяц по ней же видно, сдвинулось ли что-то.</p>
+          </div>
+          <article class="doc" aria-label="Пример итоговой страницы диагностики">
+            <div class="doc-head"><span class="mono">Диагностика · производственная компания</span><span class="mono">стр. 1 / 1</span></div>
+            <div class="doc-row"><span class="mono">Узкое место</span><span class="v">Отгрузка: готовый товар ждёт закрывающих документов</span></div>
+            <div class="doc-row"><span class="mono">Сколько стоит</span><span class="big">4,2 млн ₽<small>недополученной маржи в месяц</small></span></div>
+            <div class="doc-row"><span class="mono">Корневая причина</span><span class="v">Документы на три юрлица готовит один бухгалтер, склад отгружает только после него</span></div>
+            <div class="doc-row"><span class="mono">Проекты</span>
+              <ol>
+                <li>Разделить документооборот по юрлицам <span>финдиректор · 3 нед.</span></li>
+                <li>Отгружать по графику, а не по готовности бумаг <span>склад · 5 нед.</span></li>
+                <li>Автоматизировать выставление УПД <span>ИТ · 6 нед.</span></li>
+              </ol>
+            </div>
+            <div class="doc-row"><span class="mono">Эффект</span><span class="v">+11% к отгрузкам за квартал, кассовый разрыв закрыт</span></div>
+            <span class="stamp">пример</span>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="ladder">
+    <div class="wrap sec-grid">
+      <span class="mono">Форматы</span>
+      <div>
+        <h2>С чего начать</h2>
+        <p class="intro">Каждый шаг заканчивается результатом, с которым можно остановиться. Дальше идёте, только если цифры убедили.</p>
+        <div class="ladder">
+          <div class="tier">
+            <span class="mono"><span>Шаг 1</span><span>3 часа</span></span>
+            <h3>Экспресс-разбор</h3>
+            <div class="price">150 000 ₽<small>засчитывается в диагностику</small></div>
+            <p>Одна встреча с собственником и двумя-тремя ключевыми людьми.</p>
+            <ul>
+              <li>Названное узкое место</li>
+              <li>Оценка, сколько оно стоит в месяц</li>
+              <li>Что сделать уже на этой неделе</li>
+            </ul>
+            <a class="btn ghost" href="#contact" data-tier="Экспресс-разбор">Записаться</a>
+          </div>
+          <div class="tier main">
+            <span class="mono"><span>Шаг 2 · основной формат</span><span>3 недели</span></span>
+            <h3>Диагностика <span class="nw">«Где стоят деньги»</span></h3>
+            <div class="price">от 500 000 ₽<small>для корпораций от 1 000 000 ₽</small></div>
+            <p>Интервью, цифры, процессы. Вся кухня остаётся у меня, вам достаётся решение.</p>
+            <ul>
+              <li>Узкое место и его корневая причина</li>
+              <li>Цена узкого места в рублях</li>
+              <li>Три проекта с владельцами, сроками и эффектом</li>
+              <li>Финансовая модель эффекта</li>
+              <li>Защита результата перед командой или советом</li>
+            </ul>
+            <a class="btn" href="#contact" data-tier="Диагностика">Обсудить диагностику <span class="arr">→</span></a>
+          </div>
+          <div class="tier">
+            <span class="mono"><span>Шаг 3</span><span>3–6 месяцев</span></span>
+            <h3>Расшивка</h3>
+            <div class="price">фикс + доля от эффекта<small>считаем после диагностики</small></div>
+            <p>Веду проекты, пока изменения не начнут работать без меня.</p>
+            <ul>
+              <li>Трекинг по неделям</li>
+              <li>Роли и зоны ответственности</li>
+              <li>Бюджет и финансовая модель</li>
+              <li>Работа с сопротивлением команды</li>
+              <li>Автоматизация и ИИ-агенты</li>
+            </ul>
+            <a class="btn ghost" href="#contact" data-tier="Расшивка">Обсудить внедрение</a>
+          </div>
+        </div>
+        <div class="guarantee">
+          <b>0 ₽</b>
+          <p>Если найденное узкое место стоит вам меньше, чем сама диагностика, я верну деньги за неё.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="calc">
+    <div class="wrap sec-grid">
+      <span class="mono">Расчёт</span>
+      <div>
+        <h2>Сколько стоит ваша пробка</h2>
+        <p class="intro">Три цифры о компании, и станет видно, сколько денег узкое место забирает каждый месяц.</p>
+        <div class="calc">
+          <div class="calc-in">
+            <div class="field">
+              <label for="rev">Выручка компании в год <output id="revOut">1 млрд ₽</output></label>
+              <input type="range" id="rev" min="0" max="100" step="1" value="44">
+            </div>
+            <div class="field">
+              <label for="mar">Сколько остаётся с рубля выручки после прямых затрат <output id="marOut">30%</output></label>
+              <input type="range" id="mar" min="5" max="70" step="1" value="30">
+            </div>
+            <div class="field">
+              <label id="cutL">Насколько узкое место режет поток</label>
+              <div class="seg" role="group" aria-labelledby="cutL" id="cut">
+                <button type="button" data-v="0.05" aria-pressed="false">Немного<small>5%</small></button>
+                <button type="button" data-v="0.1" aria-pressed="true">Заметно<small>10%</small></button>
+                <button type="button" data-v="0.2" aria-pressed="false">Сильно<small>20%</small></button>
+              </div>
+            </div>
+          </div>
+          <div class="calc-out" aria-live="polite">
+            <span class="mono">Узкое место забирает</span>
+            <div class="num" id="perMonth">2,5 млн ₽<small>каждый месяц</small></div>
+            <div class="row"><span>За год</span><b id="perYear">30 млн ₽</b></div>
+            <div class="row"><span>Диагностика <span id="diagPrice" class="nw">500 000 ₽</span> окупится за</span><b id="payback">6 дней</b></div>
+            <p class="fine">Это оценка на допущениях: поток растёт на выбранный процент, и вся добавка идёт в маржу. Точную цифру по вашей компании считаем на экспресс-разборе.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="stick">
+    <div class="wrap sec-grid">
+      <span class="mono">После проекта</span>
+      <div>
+        <h2>Почему через полгода всё не вернётся</h2>
+        <p class="intro">Консультант уходит, и компания тихо возвращается к старому. Я заранее строю работу так, чтобы этого не случилось.</p>
+        <div class="stick">
+          <div><span class="mono">Роли</span><h3>У изменения есть хозяин</h3><p>Каждый проект ведёт человек внутри компании. Я помогаю ему, а не делаю за него, поэтому после моего ухода проект остаётся у него.</p></div>
+          <div><span class="mono">Люди</span><h3>Сопротивление учтено в плане</h3><p>До старта выясняю, кому изменение невыгодно и что ему нужно, чтобы стать союзником. Так проекты не глохнут на втором месяце.</p></div>
+          <div><span class="mono">Автоматизация</span><h3>Старому способу некуда вернуться</h3><p>Где можно, рутину забирают автоматизация и ИИ-агенты. Новый процесс становится единственным рабочим.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="about">
+    <div class="wrap sec-grid">
+      <span class="mono">Кто работает</span>
+      <div class="about">
+        <div>
+          <p class="quote">Я нахожу место, которое не даёт компании зарабатывать, и расшиваю его. Как бляшку в артерии: убрал, и <span class="red">кровь пошла</span>.</p>
+          <div class="about-text">
+            <p>Много лет я работала внутри корпораций и крупного бизнеса, на операционке. Там видно, что большая часть проблем компании растёт из одного места в системе, которое никто не трогает, потому что «так было всегда».</p>
+            <p>Работаю с компанией на нескольких уровнях сразу: роль собственника, стратегия, команда, процессы и деньги. Если узкое место окажется в роли директора, будем строить роль директора.</p>
+          </div>
+        </div>
+        <div class="about-side">
+          <div><span class="mono">Опыт</span><span>Корпорации и крупный бизнес, операционное управление</span></div>
+          <div><span class="mono">Клиенты</span><span>Приходят по рекомендации тех, с кем я уже работала</span></div>
+          <div><span class="mono">Инструменты</span><span>Теория ограничений, стратсессии по своей методике, финмодели и бюджетирование, управление изменениями, ИИ-агенты</span></div>
+          <div><span class="mono">Формат</span><span>Москва и онлайн, NDA, договор и закрывающие документы</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="faq">
+    <div class="wrap sec-grid">
+      <span class="mono">Вопросы</span>
+      <div>
+        <h2>Что обычно спрашивают</h2>
+        <div class="faq">
+          <details><summary>Чем это отличается от финдиректора на аутсорсе?</summary><p>Финдиректор наводит порядок в цифрах. Я ищу, почему цифры такие: где встаёт процесс и кто его держит. Финансовую модель и бюджет я тоже собираю, но уже под найденное решение.</p></details>
+          <details><summary>У нас уже были консультанты, ничего не поменялось</summary><p>Частая история. Поэтому диагностика заканчивается проектами с владельцами и сроками, а внедрение я веду сама, пока процесс не начнёт работать без меня.</p></details>
+          <details><summary>Сколько времени нужно от собственника?</summary><p>На диагностику около 6–8 часов за три недели: стартовая встреча, пара интервью и защита результата. Остальное время я работаю с командой и цифрами.</p></details>
+          <details><summary>Работаете с корпорациями?</summary><p>Да, это мой основной опыт. Проектный формат, NDA, договор и закрывающие документы, согласование с закупками.</p></details>
+          <details><summary>А если узкое место — это я сам?</summary><p>Так бывает часто, и это нормально. Тогда работаем с ролью собственника: что он решает сам, что отдаёт и кому, чтобы компания перестала ждать его подписи.</p></details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec contact" id="contact">
+    <div class="wrap sec-grid">
+      <span class="mono">Заявка</span>
+      <div>
+        <h2>Начнём с разбора</h2>
+        <p class="intro">Опишите в двух словах, что болит. Я отвечу в течение дня и предложу время для встречи.</p>
+        <form id="form" novalidate>
+          <div class="f"><label for="fName">Имя</label><input id="fName" name="name" autocomplete="name" required></div>
+          <div class="f"><label for="fCo">Компания и ваша роль</label><input id="fCo" name="company" autocomplete="organization"></div>
+          <div class="f"><label for="fRev">Выручка в год</label>
+            <select id="fRev" name="revenue">
+              <option value="">Выберите</option>
+              <option>до 300 млн ₽</option>
+              <option>300 млн – 1 млрд ₽</option>
+              <option>1–5 млрд ₽</option>
+              <option>больше 5 млрд ₽</option>
+            </select>
+          </div>
+          <div class="f"><label for="fFmt">Формат</label>
+            <select id="fFmt" name="format">
+              <option>Экспресс-разбор</option>
+              <option>Диагностика</option>
+              <option>Расшивка</option>
+              <option>Пока не знаю</option>
+            </select>
+          </div>
+          <div class="f wide"><label for="fPain">Что сейчас болит</label><textarea id="fPain" name="pain" rows="3"></textarea></div>
+          <div class="f wide"><label for="fCon">Telegram или телефон</label><input id="fCon" name="contact" required></div>
+          <div class="form-end">
+            <button class="btn" type="submit">Записаться на разбор <span class="arr">→</span></button>
+            <p>Всё, что вы напишете, остаётся между нами.</p>
+          </div>
+          <p class="sent" id="sent" hidden>Спасибо. Это демо-версия сайта: заявка пока никуда не уходит. Форму подключим к Telegram при запуске.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Где стоят деньги · операционная диагностика</span>
+    <span>2026</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  /* ---------- схема потока ---------- */
+  const ST = [
+    {name:'Заявки', cap:'<b>Заявки.</b> Реклама работает, но заявок ровно столько, чтобы продажи не скучали. Вся цепочка дальше недогружена.'},
+    {name:'Продажи', cap:'<b>Продажи.</b> Заявок много, договоров мало: каждое решение по скидке ждёт одобрения сверху по две недели.'},
+    {name:'Закупки', cap:'<b>Закупки.</b> Цех простаивает, потому что сырьё согласуют три подписи из трёх разных отделов.'},
+    {name:'Производство', cap:'<b>Производство.</b> Заказы есть, цех загружен на сто процентов, а сроки всё равно срываются.'},
+    {name:'Отгрузка', cap:'<b>Отгрузка.</b> Товар готов и лежит на складе. Деньги за него придут через 47 дней.'},
+    {name:'Оплата', cap:'<b>Оплата.</b> Отгрузили и закрыли сделку, а дебиторка растёт и каждый месяц случается кассовый разрыв.'}
+  ];
+  const FIXED_CAP = '<b>Расшито.</b> Та же компания, те же люди. Поток доходит до прибыли целиком, и остальные улучшения наконец начинают давать деньги.';
+  const N = ST.length;            // станции, ещё одна — «Прибыль»
+  const SPAWN = 5.2;              // частиц в секунду
+  const NORMAL = 16, JAM = 1.75;  // пропускная способность станций
+  let QCAP = 24;                  // сколько помещается в пробке, остальное падает
+  const LANES = 4;
+
+  const cv = document.getElementById('flow');
+  const ctx = cv.getContext('2d');
+  const scheme = document.getElementById('scheme');
+  const capEl = document.getElementById('cap');
+  const fixBtn = document.getElementById('fix');
+  const meter = document.getElementById('meter');
+  const meterVal = document.getElementById('meterVal');
+  const meterTxt = document.getElementById('meterTxt');
+  const chipsEl = document.getElementById('chips');
+
+  let jam = 4, fixed = false;
+  let W = 0, H = 0, vertical = false, L = 0, pad = 0, nodeW = 0, nodeH = 0, hl = 0, gap = 7;
+  let parts = [], falling = [], spawnAcc = 0, shown = 0.34;
+  const gates = Array.from({length: N + 1}, () => ({q: [], acc: 0}));
+  let C = {};
+
+  function readColors(){
+    const s = getComputedStyle(document.documentElement);
+    ['ink','ink-2','line','sheet','paper','signal','ok','on-ink'].forEach(k => C[k] = s.getPropertyValue('--' + k).trim());
+  }
+  readColors();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { readColors(); draw(); });
+  new MutationObserver(() => { readColors(); draw(); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+  function center(i){ return L * (i + 0.5) / (N + 1); }
+  function pt(s, lat){
+    return vertical ? [W / 2 + lat, pad + s] : [pad + s, H / 2 + 8 + lat];
+  }
+  function layout(){
+    const old = L;
+    const wantV = cv.parentElement.clientWidth < 1060;
+    if (wantV !== vertical || !old){ vertical = wantV; cv.style.height = vertical ? '600px' : '300px'; parts.forEach(p => p.s = Math.min(p.s, 0)); }
+    const r = cv.getBoundingClientRect();
+    W = r.width; H = r.height;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (vertical){
+      pad = 18; L = H - pad * 2;
+      nodeW = Math.min(230, W - 130); nodeH = 40; hl = nodeH / 2; gap = 6.5; QCAP = 16;
+    } else {
+      pad = 18; L = W - pad * 2;
+      nodeW = Math.min(118, L / (N + 1) - 56); nodeH = 54; hl = nodeW / 2; gap = 7; QCAP = 20;
+    }
+    if (old && old !== L){ const k = L / old; parts.forEach(p => p.s *= k); }
+  }
+
+  function tailStop(i){
+    const g = gates[i];
+    return center(i) - hl - 8 - Math.floor(g.q.length / LANES) * gap;
+  }
+  function slot(k){ return {back: 8 + Math.floor(k / LANES) * gap, lat: ((k % LANES) - (LANES - 1) / 2) * gap}; }
+  function rateOf(i){ return (i === jam && !fixed) ? JAM : NORMAL; }
+
+  function step(dt){
+    const speed = Math.max(70, L / 9);
+    spawnAcc += dt * SPAWN;
+    while (spawnAcc >= 1){
+      spawnAcc -= 1;
+      if (parts.length < 170) parts.push({s: -6, lat: (Math.random() - .5) * 3, tl: 0, next: 0, state: 'move', v: speed * (0.9 + Math.random() * .2)});
+    }
+    for (let i = 0; i <= N; i++){
+      const g = gates[i];
+      g.acc += dt * rateOf(i);
+      while (g.acc >= 1 && g.q.length){
+        g.acc -= 1;
+        const p = g.q.shift();
+        p.state = 'move'; p.s = center(i) + hl + 2; p.next = i + 1; p.tl = (Math.random() - .5) * 3;
+        if (i === N){ p.state = 'done'; }
+      }
+      if (!g.q.length) g.acc = Math.min(g.acc, 1);
+      g.q.forEach((p, k) => {
+        const sl = slot(k), ts = center(i) - hl - sl.back;
+        p.s += (ts - p.s) * Math.min(1, dt * 6);
+        p.lat += (sl.lat - p.lat) * Math.min(1, dt * 6);
+      });
+    }
+    for (const p of parts){
+      if (p.state !== 'move') continue;
+      p.s += p.v * dt;
+      p.lat += (p.tl - p.lat) * Math.min(1, dt * 4);
+      if (p.next <= N && p.s >= tailStop(p.next)){
+        const g = gates[p.next];
+        if (p.next === jam && !fixed && g.q.length >= QCAP){
+          p.state = 'fall';
+          const [x, y] = pt(p.s, p.lat);
+          falling.push({x, y, vx: (vertical ? 1 : 0.4) * (20 + Math.random() * 30) * (Math.random() < .5 ? -1 : 1), vy: vertical ? 0 : 10, a: 1});
+        } else {
+          p.state = 'queue'; g.q.push(p);
+        }
+      }
+    }
+    parts = parts.filter(p => p.state === 'move' || p.state === 'queue');
+    for (const f of falling){
+      if (vertical){ f.vx *= 1.04; f.x += f.vx * dt; f.vy += 60 * dt; f.y += f.vy * dt; }
+      else { f.vy += 260 * dt; f.y += f.vy * dt; f.x += f.vx * dt; }
+      f.a -= dt * 0.9;
+    }
+    falling = falling.filter(f => f.a > 0);
+    const target = fixed ? 1 : JAM / SPAWN;
+    shown += (target - shown) * Math.min(1, dt * 1.6);
+  }
+
+  function rr(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function draw(){
+    if (!W) return;
+    ctx.clearRect(0, 0, W, H);
+    // труба
+    const [ax, ay] = pt(-pad, 0), [bx, by] = pt(L + pad, 0);
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (vertical){ ctx.moveTo(ax - 13, ay); ctx.lineTo(bx - 13, by); ctx.moveTo(ax + 13, ay); ctx.lineTo(bx + 13, by); }
+    else { ctx.moveTo(ax, ay - 13); ctx.lineTo(bx, by - 13); ctx.moveTo(ax, ay + 13); ctx.lineTo(bx, by + 13); }
+    ctx.stroke();
+    // риски шкалы
+    ctx.fillStyle = C.line;
+    for (let s = 0; s < L; s += 24){
+      const [x, y] = pt(s, vertical ? 19 : 19);
+      if (vertical) ctx.fillRect(x, y, 4, 1); else ctx.fillRect(x, y, 1, 4);
+    }
+    // частицы
+    const jamQ = new Set(gates[jam].q);
+    for (const p of parts){
+      const [x, y] = pt(p.s, p.lat);
+      ctx.fillStyle = (jamQ.has(p) && !fixed) ? C.signal : C.ink;
+      ctx.beginPath(); ctx.arc(x, y, 3.1, 0, 6.2832); ctx.fill();
+    }
+    for (const f of falling){
+      ctx.globalAlpha = Math.max(0, f.a);
+      ctx.fillStyle = C.signal;
+      ctx.beginPath(); ctx.arc(f.x, f.y, 2.8, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // станции
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let i = 0; i <= N; i++){
+      const [cx, cy] = pt(center(i), 0);
+      const x = cx - nodeW / 2, y = cy - nodeH / 2;
+      const isJam = i === jam, sink = i === N;
+      rr(x, y, nodeW, nodeH, 3);
+      ctx.fillStyle = sink ? C.ink : C.sheet; ctx.fill();
+      ctx.lineWidth = isJam ? 2 : 1;
+      ctx.strokeStyle = isJam ? (fixed ? C.ok : C.signal) : C.ink; ctx.stroke();
+      ctx.fillStyle = sink ? C['on-ink'] : (isJam ? (fixed ? C.ok : C.signal) : C.ink);
+      ctx.font = '600 ' + (vertical ? 18 : 18) + 'px "Fira Sans Extra Condensed", "Arial Narrow", sans-serif';
+      ctx.fillText(sink ? 'Прибыль' : ST[i].name, cx, cy + 1);
+      if (isJam){
+        ctx.font = '500 11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = fixed ? C.ok : C.signal;
+        const label = fixed ? 'РАСШИТО' : 'ЗДЕСЬ СТОЯТ ДЕНЬГИ';
+        if (vertical){ ctx.textAlign = 'left'; ctx.fillText(label === 'РАСШИТО' ? label : 'УЗКОЕ', cx + nodeW / 2 + 8, cy - 6); if (!fixed) ctx.fillText('МЕСТО', cx + nodeW / 2 + 8, cy + 8); ctx.textAlign = 'center'; }
+        else ctx.fillText(label, cx, y - 16);
+      }
+    }
+    // проценты
+    const pct = Math.round(shown * 100);
+    meterVal.textContent = pct + '%';
+  }
+
+  function setCap(){ capEl.innerHTML = fixed ? FIXED_CAP : ST[jam].cap; }
+  function setJam(i){
+    jam = i; fixed = false; syncUI();
+  }
+  function syncUI(){
+    [...chipsEl.querySelectorAll('.chip')].forEach((b, k) => b.setAttribute('aria-pressed', String(k === jam)));
+    fixBtn.textContent = fixed ? 'Вернуть как было' : 'Расшить узкое место';
+    meter.classList.toggle('ok', fixed);
+    meterTxt.textContent = fixed ? 'потока доходит до прибыли' : 'потока доходит до прибыли';
+    setCap();
+    if (!playing) { warm(6); draw(); }
+  }
+  ST.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = s.name;
+    b.addEventListener('click', () => setJam(i));
+    chipsEl.appendChild(b);
+  });
+  fixBtn.addEventListener('click', () => { fixed = !fixed; syncUI(); });
+  cv.addEventListener('click', e => {
+    const r = cv.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    for (let i = 0; i < N; i++){
+      const [cx, cy] = pt(center(i), 0);
+      if (Math.abs(mx - cx) < nodeW / 2 + 6 && Math.abs(my - cy) < nodeH / 2 + 10){ setJam(i); return; }
+    }
+  });
+
+  function warm(sec){ for (let t = 0; t < sec; t += 1 / 30) step(1 / 30); }
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches && location.hash !== '#motion';
+  let playing = !reduce, visible = true, last = 0, raf = 0;
+  function loop(t){
+    raf = 0;
+    if (!playing || !visible || document.hidden) { last = 0; return; }
+    const dt = last ? Math.min(0.05, (t - last) / 1000) : 1 / 60;
+    last = t;
+    step(dt); draw();
+    raf = requestAnimationFrame(loop);
+  }
+  function kick(){ if (!raf && playing && visible && !document.hidden) raf = requestAnimationFrame(loop); }
+  new IntersectionObserver(es => { visible = es[0].isIntersecting; kick(); }).observe(cv);
+  document.addEventListener('visibilitychange', kick);
+  function start(){ playing = true; scheme.classList.remove('still'); kick(); }
+  document.getElementById('play').addEventListener('click', start);
+  addEventListener('hashchange', () => { if (location.hash === '#motion') start(); });
+  addEventListener('resize', () => { layout(); if (!playing) draw(); });
+
+  layout(); setCap(); syncUI();
+  warm(14);
+  if (!playing) scheme.classList.add('still');
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => { layout(); draw(); kick(); });
+  draw(); kick();
+
+  /* ---------- калькулятор ---------- */
+  const rev = document.getElementById('rev'), mar = document.getElementById('mar');
+  const revOut = document.getElementById('revOut'), marOut = document.getElementById('marOut');
+  const cut = document.getElementById('cut');
+  let cutV = 0.1;
+  const revVal = v => 1e8 * Math.pow(200, v / 100);        // 100 млн → 20 млрд
+  function niceRev(x){
+    const mag = Math.pow(10, Math.floor(Math.log10(x)) - 1);
+    return Math.round(x / mag) * mag;
+  }
+  function money(x){
+    const f = (v, d) => v.toLocaleString('ru-RU', {maximumFractionDigits: d, minimumFractionDigits: 0});
+    if (x >= 1e9) return f(x / 1e9, x >= 1e10 ? 0 : 1) + ' млрд ₽';
+    if (x >= 1e6) return f(x / 1e6, x >= 1e8 ? 0 : 1) + ' млн ₽';
+    if (x >= 1e3) return f(Math.round(x / 1e3), 0) + ' тыс. ₽';
+    return f(Math.round(x), 0) + ' ₽';
+  }
+  function days(n){
+    n = Math.max(1, Math.ceil(n));
+    const m10 = n % 10, m100 = n % 100;
+    const w = (m10 === 1 && m100 !== 11) ? 'день' : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) ? 'дня' : 'дней';
+    return n + ' ' + w;
+  }
+  function calc(){
+    const R = niceRev(revVal(+rev.value)), M = +mar.value / 100;
+    revOut.textContent = money(R).replace(/ ₽$/, ' ₽');
+    marOut.textContent = mar.value + '%';
+    rev.style.setProperty('--p', rev.value + '%');
+    mar.style.setProperty('--p', ((mar.value - mar.min) / (mar.max - mar.min) * 100) + '%');
+    const month = R / 12 * cutV * M;
+    const price = R >= 3e9 ? 1e6 : 5e5;
+    document.getElementById('perMonth').innerHTML = money(month) + '<small>каждый месяц</small>';
+    document.getElementById('perYear').textContent = money(month * 12);
+    document.getElementById('diagPrice').textContent = price.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('payback').textContent = days(price / (month / 30));
+  }
+  rev.addEventListener('input', calc); mar.addEventListener('input', calc);
+  cut.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    cutV = +b.dataset.v;
+    [...cut.children].forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    calc();
+  });
+  calc();
+
+  /* ---------- форма ---------- */
+  document.querySelectorAll('[data-tier]').forEach(a => a.addEventListener('click', () => {
+    const v = a.dataset.tier, sel = document.getElementById('fFmt');
+    [...sel.options].forEach(o => { if (o.text === v) sel.value = o.value; });
+  }));
+  document.getElementById('form').addEventListener('submit', e => {
+    e.preventDefault();
+    const need = [document.getElementById('fName'), document.getElementById('fCon')].filter(x => !x.value.trim());
+    if (need.length){ need[0].focus(); need[0].style.borderBottomColor = 'var(--signal)'; return; }
+    document.getElementById('sent').hidden = false;
+  });
+})();
+</script>
+</body>
+</html>
